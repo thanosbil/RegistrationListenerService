@@ -13,7 +13,7 @@ namespace RegistrationListenerService.Core.Models {
         public int Id { get; set; }
 
         /// <summary>
-        /// The message reveived (json format)
+        /// The message received (json format)
         /// </summary>
         public string MessagePayload { get; set; }
 
