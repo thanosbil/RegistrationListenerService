@@ -6,6 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="logs\**" />
+    <Compile Remove="~\**" />
+    <Content Remove="logs\**" />
+    <Content Remove="~\**" />
+    <EmbeddedResource Remove="logs\**" />
+    <EmbeddedResource Remove="~\**" />
+    <None Remove="logs\**" />
+    <None Remove="~\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

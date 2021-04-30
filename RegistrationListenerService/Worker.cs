@@ -11,18 +11,30 @@ namespace RegistrationListenerService {
     public class Worker : BackgroundService {
         private readonly ILogger<Worker> _logger;
         private readonly IRegistrationPollingService _pollingService;
+        private readonly WorkerOptions _workerOptions;
 
-        public Worker(ILogger<Worker> logger, IRegistrationPollingService pollingService) {
-            _logger = logger;
-            _pollingService = pollingService;
+        public Worker(ILogger<Worker> logger, IRegistrationPollingService pollingService, WorkerOptions workerOptions) {
+            this._logger = logger;
+            this._pollingService = pollingService;
+            this._workerOptions = workerOptions;
+        }
+
+        public override Task StartAsync(CancellationToken cancellationToken) {
+            _logger.LogInformation("Worker service has started");
+            return base.StartAsync(cancellationToken);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             while (!stoppingToken.IsCancellationRequested) {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                _logger.LogInformation("============================>Worker: Start of main execution loop<============================");
                 await _pollingService.ExecuteAsync();
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(_workerOptions.LoopCycleDelayMilliseconds, stoppingToken);                
             }
+        }
+        
+        public override Task StopAsync(CancellationToken cancellationToken) {
+            _logger.LogInformation("Worker service has stopped");
+            return base.StopAsync(cancellationToken);
         }
     }
 }

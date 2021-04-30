@@ -17,17 +17,11 @@ namespace RegistrationListenerService {
         public static void Main(string[] args) {
 
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+
+            // Serilog initialization and configuration
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .CreateLogger();
-
-            // Serilog initialization
-            //Log.Logger = new LoggerConfiguration()
-            //.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-            //.Enrich.FromLogContext()
-            //.WriteTo.Console()
-            //.WriteTo.File(@"~\test\log.txt")
-            //.CreateLogger();
 
             try {
                 Log.Information("Starting web host");
@@ -40,7 +34,7 @@ namespace RegistrationListenerService {
                 Log.CloseAndFlush();
             }
         }
-
+                
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .UseSerilog()
