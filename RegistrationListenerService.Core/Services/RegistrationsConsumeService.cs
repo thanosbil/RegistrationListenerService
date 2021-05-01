@@ -87,7 +87,8 @@ namespace RegistrationListenerService.Core.Services {
         /// </summary>
         public void StopAndDispose() {
             _channel.Close();
-            _connection.Close();            
+            _connection.Close();
+            _connection.Dispose();
         }
 
         /// <summary>
