@@ -46,7 +46,11 @@ namespace RegistrationListenerService {
                     services.AddHostedService<Worker>();
                     
                     // database context
-                    services.AddDbContext<RegistrationsDBContext>(options => {
+                    //services.AddDbContext<RegistrationsDBContext>(options => {
+                    //    options.UseSqlServer(hostContext.Configuration.GetConnectionString("Default"));
+                    //});
+
+                    services.AddDbContextFactory<RegistrationsDBContext>(options => {
                         options.UseSqlServer(hostContext.Configuration.GetConnectionString("Default"));
                     });
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -14,17 +15,17 @@ using System.Threading.Tasks;
 namespace RegistrationListenerService.Core.Services {
     public class RegistrationsConsumeService : IRegistrationConsumeService {
         private readonly ILogger<RegistrationsConsumeService> _logger;
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IDbContextFactory<RegistrationsDBContext> _dbContextFactory;
         private IConnection _connection;
         private IModel _channel;
 
-        public RegistrationsConsumeService(ILogger<RegistrationsConsumeService> logger, IServiceScopeFactory scopeFactory) {
+        public RegistrationsConsumeService(ILogger<RegistrationsConsumeService> logger, IDbContextFactory<RegistrationsDBContext> dbContextFactory) {
             this._logger = logger;
-            this._scopeFactory = scopeFactory;
+            this._dbContextFactory = dbContextFactory;
         }
 
         /// <summary>
-        /// Gets the message from the queue and writes the message to the database and file
+        /// Sets up the channel and subscribes to the Received event 
         /// </summary>
         /// <param name="rabbitMQ_Configuration"></param>
         /// <returns></returns>
@@ -47,42 +48,54 @@ namespace RegistrationListenerService.Core.Services {
                 var consumer = new EventingBasicConsumer(_channel);
                 consumer.Received += Consumer_MessageReceived;
                 
-                _channel.BasicConsume(queue: rabbitMQ_Configuration.QueueName, autoAck: false, consumer: consumer);
+                _channel.BasicConsume(queue: rabbitMQ_Configuration.QueueName, autoAck: true, consumer: consumer);
             }
             catch (Exception ex) {
-                _logger.LogError($"RegistrationPollingService.ExecuteAsync(): threw an exception. {ex}");
+                _logger.LogError($"RegistrationConsumeService.ExecuteAsync(): threw an exception. {ex}");
                 // throw maybe?
             }            
         }
 
+        /// <summary>
+        /// Handles the event when a new message is received
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Consumer_MessageReceived(object sender, BasicDeliverEventArgs e) {
-            
-            var body = e.Body.ToArray();
-            using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<RegistrationsDBContext>();
+            try {
+                var body = e.Body.ToArray();
+                using var context = _dbContextFactory.CreateDbContext();
+                var message = Encoding.UTF8.GetString(body);
+                
+                _logger.LogInformation($"New registration message received: {message}");
 
-            var message = Encoding.UTF8.GetString(body);
-            _logger.LogInformation($"New registration message received: {message}");
-            RegistrationMessage messageRecord = new RegistrationMessage {
-                MessagePayload = message,
-                ReceivedDateTime = DateTime.Now
-            };
+                RegistrationMessage messageRecord = new RegistrationMessage {
+                    MessagePayload = message,
+                    ReceivedDateTime = DateTime.Now
+                };
 
-            db.SaveChanges();
+                context.Add<RegistrationMessage>(messageRecord);
+                context.SaveChanges();
+            }
+            catch(Exception ex) {
+                _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): threw an exception {ex}");
+            }            
         }
 
+        /// <summary>
+        /// Closes the channel and the connection when the service stops
+        /// </summary>
         public void StopAndDispose() {
             _channel.Close();
             _connection.Close();            
         }
 
+        /// <summary>
+        /// Initialize a reusable connection using the provided endpoint url when the service starts
+        /// </summary>
+        /// <param name="endpoint"></param>
         public void Start(string endpoint) {
-            //var factory = new ConnectionFactory { Uri = new Uri(endpoint) };
-            var factory = new ConnectionFactory { 
-                HostName = "localhost",
-                UserName = "guest",
-                Password = "guest"
-            };
+            var factory = new ConnectionFactory { Uri = new Uri(endpoint) };            
             _connection = factory.CreateConnection();            
          }
     }
