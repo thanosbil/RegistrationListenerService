@@ -51,12 +51,17 @@ namespace RegistrationListenerService {
                     });
 
                     // configuration options for the worker service
-                    var workerOptions = new WorkerOptions();
-                    hostContext.Configuration.Bind(nameof(WorkerOptions), workerOptions);
-                    services.AddSingleton(workerOptions);
+                    var workerConfiguration = new WorkerConfiguration();
+                    hostContext.Configuration.Bind(nameof(WorkerConfiguration), workerConfiguration);
+                    services.AddSingleton(workerConfiguration);
+
+                    // configuration options for RabbitMQ
+                    var rabbitMQ_Configuration = new RabbitMQ_Configuration();
+                    hostContext.Configuration.Bind(nameof(RabbitMQ_Configuration), rabbitMQ_Configuration);
+                    services.AddSingleton(rabbitMQ_Configuration);
 
                     // The service polling the queue
-                    services.AddSingleton<IRegistrationPollingService, RegistrationsPollingService>();                    
+                    services.AddSingleton<IRegistrationConsumeService, RegistrationsConsumeService>();                    
                 });
     }
 }

@@ -10,29 +10,31 @@ using System.Threading.Tasks;
 namespace RegistrationListenerService {
     public class Worker : BackgroundService {
         private readonly ILogger<Worker> _logger;
-        private readonly IRegistrationPollingService _pollingService;
-        private readonly WorkerOptions _workerOptions;
+        private readonly IRegistrationConsumeService _consumeService;
+        private readonly WorkerConfiguration _workerConfiguration;
+        private readonly RabbitMQ_Configuration _rabbitMQ_Configuration;
 
-        public Worker(ILogger<Worker> logger, IRegistrationPollingService pollingService, WorkerOptions workerOptions) {
+        public Worker(ILogger<Worker> logger, IRegistrationConsumeService consumeService, 
+            WorkerConfiguration workerConfiguration, RabbitMQ_Configuration rabbitMQ_Configuration) {
+
             this._logger = logger;
-            this._pollingService = pollingService;
-            this._workerOptions = workerOptions;
+            this._consumeService = consumeService;
+            this._workerConfiguration = workerConfiguration;
+            this._rabbitMQ_Configuration = rabbitMQ_Configuration;
         }
 
         public override Task StartAsync(CancellationToken cancellationToken) {
-            _logger.LogInformation("Worker service has started");
+            _consumeService.Start(_rabbitMQ_Configuration.Endpoint);
+            _logger.LogInformation("Worker service has started");            
             return base.StartAsync(cancellationToken);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            while (!stoppingToken.IsCancellationRequested) {
-                _logger.LogInformation("============================>Worker: Start of main execution loop<============================");
-                await _pollingService.ExecuteAsync();
-                await Task.Delay(_workerOptions.LoopCycleDelayMilliseconds, stoppingToken);                
-            }
+            await _consumeService.ExecuteAsync(_rabbitMQ_Configuration);
         }
         
         public override Task StopAsync(CancellationToken cancellationToken) {
+            _consumeService.StopAndDispose();
             _logger.LogInformation("Worker service has stopped");
             return base.StopAsync(cancellationToken);
         }

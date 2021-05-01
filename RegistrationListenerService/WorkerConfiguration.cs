@@ -9,11 +9,11 @@ namespace RegistrationListenerService {
     /// <summary>
     /// Configuration settings for the worker service class
     /// </summary>
-    public class WorkerOptions {
+    public class WorkerConfiguration {
 
         /// <summary>
         /// The time in milliseconds that the execution cycle gets delayed for
         /// </summary>
-        public int LoopCycleDelayMilliseconds { get; set; }
+        public int LoopCycleDelayMilliseconds { get; set; }        
     }
 }
