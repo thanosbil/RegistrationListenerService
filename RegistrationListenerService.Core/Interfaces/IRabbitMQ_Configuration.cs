@@ -16,6 +16,9 @@ namespace RegistrationListenerService.Core.Interfaces {
         /// </summary>
         string Endpoint { get; set; }
 
+        /// <summary>
+        /// The name of the exchange
+        /// </summary>
         string ExchangeName { get; set; }
 
         /// <summary>
