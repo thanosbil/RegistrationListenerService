@@ -11,15 +11,13 @@ namespace RegistrationListenerService {
     public class Worker : BackgroundService {
         private readonly ILogger<Worker> _logger;
         private readonly IRegistrationConsumeService _consumeService;
-        private readonly WorkerConfiguration _workerConfiguration;
         private readonly RabbitMQ_Configuration _rabbitMQ_Configuration;
 
         public Worker(ILogger<Worker> logger, IRegistrationConsumeService consumeService, 
-            WorkerConfiguration workerConfiguration, RabbitMQ_Configuration rabbitMQ_Configuration) {
+            RabbitMQ_Configuration rabbitMQ_Configuration) {
 
             this._logger = logger;
             this._consumeService = consumeService;
-            this._workerConfiguration = workerConfiguration;
             this._rabbitMQ_Configuration = rabbitMQ_Configuration;
         }
 

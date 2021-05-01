@@ -45,26 +45,16 @@ namespace RegistrationListenerService {
                 .ConfigureServices((hostContext, services) => {
                     services.AddHostedService<Worker>();
                     
-                    // database context
-                    //services.AddDbContext<RegistrationsDBContext>(options => {
-                    //    options.UseSqlServer(hostContext.Configuration.GetConnectionString("Default"));
-                    //});
-
                     services.AddDbContextFactory<RegistrationsDBContext>(options => {
                         options.UseSqlServer(hostContext.Configuration.GetConnectionString("Default"));
                     });
-
-                    // configuration options for the worker service
-                    var workerConfiguration = new WorkerConfiguration();
-                    hostContext.Configuration.Bind(nameof(WorkerConfiguration), workerConfiguration);
-                    services.AddSingleton(workerConfiguration);
 
                     // configuration options for RabbitMQ
                     var rabbitMQ_Configuration = new RabbitMQ_Configuration();
                     hostContext.Configuration.Bind(nameof(RabbitMQ_Configuration), rabbitMQ_Configuration);
                     services.AddSingleton(rabbitMQ_Configuration);
 
-                    // The service polling the queue
+                    // The service listening for registration messages in the queue
                     services.AddSingleton<IRegistrationConsumeService, RegistrationsConsumeService>();                    
                 });
     }
