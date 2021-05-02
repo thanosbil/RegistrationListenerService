@@ -11,7 +11,7 @@ namespace RegistrationListenerService {
         /// <summary>
         /// The endpoint for the messaging service
         /// </summary>
-        public string Endpoint { get; set; }
+        public string MessageBrokerEndpoint { get; set; }
 
         /// <summary>
         /// The name of the exchange
@@ -37,5 +37,15 @@ namespace RegistrationListenerService {
         /// The file name
         /// </summary>
         public string FileOutputName { get; set; }
+
+        /// <summary>
+        /// The endpoint for the first service
+        /// </summary>
+        public string PostEndpoint1 { get; set; }
+
+        /// <summary>
+        /// The endpoint for the second service
+        /// </summary>
+        public string PostEndpoint2 { get; set; }
     }
 }

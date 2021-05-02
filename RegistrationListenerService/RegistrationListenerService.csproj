@@ -6,12 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="FileStorage\**" />
     <Compile Remove="logs\**" />
     <Compile Remove="~\**" />
+    <Content Remove="FileStorage\**" />
     <Content Remove="logs\**" />
     <Content Remove="~\**" />
+    <EmbeddedResource Remove="FileStorage\**" />
     <EmbeddedResource Remove="logs\**" />
     <EmbeddedResource Remove="~\**" />
+    <None Remove="FileStorage\**" />
     <None Remove="logs\**" />
     <None Remove="~\**" />
   </ItemGroup>

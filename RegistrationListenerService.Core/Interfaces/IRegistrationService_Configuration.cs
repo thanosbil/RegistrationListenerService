@@ -14,7 +14,7 @@ namespace RegistrationListenerService.Core.Interfaces {
         /// <summary>
         /// The endpoint for the messaging service
         /// </summary>
-        string Endpoint { get; set; }
+        string MessageBrokerEndpoint { get; set; }
 
         /// <summary>
         /// The name of the exchange
@@ -40,5 +40,15 @@ namespace RegistrationListenerService.Core.Interfaces {
         /// The file name
         /// </summary>
         string FileOutputName { get; set; }
+
+        /// <summary>
+        /// The endpoint for the first service
+        /// </summary>
+        string PostEndpoint1 { get; set; }
+
+        /// <summary>
+        /// The endpoint for the second service
+        /// </summary>
+        string PostEndpoint2 { get; set; }
     }
 }

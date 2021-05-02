@@ -38,7 +38,7 @@ namespace RegistrationListenerService.Core.Services {
                 _connection = factory.CreateConnection();
             }
             catch (Exception ex) {
-                _logger.LogError($"RegistrationConsumeService.Start(): threw an exception {ex}");
+                _logger.LogError($"RegistrationConsumeService.Start(): threw an exception. {ex}");
             }
         }
 
@@ -102,7 +102,7 @@ namespace RegistrationListenerService.Core.Services {
                                           messageRecord);
             }
             catch(Exception ex) {
-                _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): threw an exception {ex}");
+                _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): threw an exception. {ex}");
             }            
         }
 
@@ -116,7 +116,7 @@ namespace RegistrationListenerService.Core.Services {
                 _connection.Dispose();
             }
             catch(Exception ex) {
-                _logger.LogError($"RegistrationConsumeService.StopAndDispose(): threw an exception {ex}");
+                _logger.LogError($"RegistrationConsumeService.StopAndDispose(): threw an exception. {ex}");
             }            
         }        
     }

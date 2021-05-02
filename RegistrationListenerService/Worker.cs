@@ -28,8 +28,8 @@ namespace RegistrationListenerService {
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public override Task StartAsync(CancellationToken cancellationToken) {
-            _consumeService.Start(_registrationService_Configuration.Endpoint);
-            _logger.LogInformation("Worker service has started");            
+            _consumeService.Start(_registrationService_Configuration.MessageBrokerEndpoint);
+            _logger.LogInformation("Worker service has started.");            
             return base.StartAsync(cancellationToken);
         }
 
@@ -51,7 +51,7 @@ namespace RegistrationListenerService {
         /// <returns></returns>
         public override Task StopAsync(CancellationToken cancellationToken) {
             _consumeService.StopAndDispose();
-            _logger.LogInformation("Worker service has stopped");
+            _logger.LogInformation("Worker service has stopped.");
             return base.StopAsync(cancellationToken);
         }
     }
