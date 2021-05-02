@@ -11,14 +11,14 @@ namespace RegistrationListenerService {
     public class Worker : BackgroundService {
         private readonly ILogger<Worker> _logger;
         private readonly IRegistrationConsumeService _consumeService;
-        private readonly RabbitMQ_Configuration _rabbitMQ_Configuration;
+        private readonly RegistrationService_Configuration _registrationService_Configuration;
 
         public Worker(ILogger<Worker> logger, IRegistrationConsumeService consumeService, 
-            RabbitMQ_Configuration rabbitMQ_Configuration) {
+            RegistrationService_Configuration registrationService_Configuration) {
 
             this._logger = logger;
             this._consumeService = consumeService;
-            this._rabbitMQ_Configuration = rabbitMQ_Configuration;
+            this._registrationService_Configuration = registrationService_Configuration;
         }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace RegistrationListenerService {
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public override Task StartAsync(CancellationToken cancellationToken) {
-            _consumeService.Start(_rabbitMQ_Configuration.Endpoint);
+            _consumeService.Start(_registrationService_Configuration.Endpoint);
             _logger.LogInformation("Worker service has started");            
             return base.StartAsync(cancellationToken);
         }
@@ -40,7 +40,7 @@ namespace RegistrationListenerService {
         /// <param name="stoppingToken"></param>
         /// <returns></returns>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            await _consumeService.ExecuteAsync(_rabbitMQ_Configuration);
+            await _consumeService.ExecuteAsync(_registrationService_Configuration);
         }
 
         /// <summary>

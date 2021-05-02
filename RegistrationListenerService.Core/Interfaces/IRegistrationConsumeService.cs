@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace RegistrationListenerService.Core.Interfaces {
     public interface IRegistrationConsumeService {
         void Start(string endpoint);
-        Task ExecuteAsync(IRabbitMQ_Configuration rabbitMQ_Configuration);
+        Task ExecuteAsync(IRegistrationService_Configuration registrationService_Configuration);
         void StopAndDispose();
     }
 }

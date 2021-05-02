@@ -50,9 +50,9 @@ namespace RegistrationListenerService {
                     });
 
                     // configuration options for RabbitMQ
-                    var rabbitMQ_Configuration = new RabbitMQ_Configuration();
-                    hostContext.Configuration.Bind(nameof(RabbitMQ_Configuration), rabbitMQ_Configuration);
-                    services.AddSingleton(rabbitMQ_Configuration);
+                    var registrationService_Configuration = new RegistrationService_Configuration();
+                    hostContext.Configuration.Bind(nameof(RegistrationService_Configuration), registrationService_Configuration);
+                    services.AddSingleton(registrationService_Configuration);
 
                     // The service listening for registration messages in the queue
                     services.AddSingleton<IRegistrationConsumeService, RegistrationsConsumeService>();                    

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 namespace RegistrationListenerService.Core.Interfaces {
 
     /// <summary>
-    /// Interface to expose configuration properties for RabbitMQ
+    /// Interface to expose configuration properties for the RegistrationConsumeService
     /// </summary>
-    public interface IRabbitMQ_Configuration {
+    public interface IRegistrationService_Configuration {
 
         /// <summary>
         /// The endpoint for the messaging service
@@ -30,5 +30,15 @@ namespace RegistrationListenerService.Core.Interfaces {
         /// The routing key of the queue
         /// </summary>
         string RoutingKey { get; set; }
+
+        /// <summary>
+        /// The path where the file will be stored
+        /// </summary>
+        string FileOutputPath { get; set; }
+
+        /// <summary>
+        /// The file name
+        /// </summary>
+        string FileOutputName { get; set; }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RegistrationListenerService.Core.DataAccess;
+using RegistrationListenerService.Core.Helpers;
 using RegistrationListenerService.Core.Interfaces;
 using RegistrationListenerService.Core.Models;
 using System;
@@ -16,12 +17,29 @@ namespace RegistrationListenerService.Core.Services {
     public class RegistrationsConsumeService : IRegistrationConsumeService {
         private readonly ILogger<RegistrationsConsumeService> _logger;
         private readonly IDbContextFactory<RegistrationsDBContext> _dbContextFactory;
+        private IRegistrationService_Configuration _registrationService_Configuration;
         private IConnection _connection;
         private IModel _channel;
 
-        public RegistrationsConsumeService(ILogger<RegistrationsConsumeService> logger, IDbContextFactory<RegistrationsDBContext> dbContextFactory) {
+        public RegistrationsConsumeService(ILogger<RegistrationsConsumeService> logger, 
+            IDbContextFactory<RegistrationsDBContext> dbContextFactory) {
+
             this._logger = logger;
-            this._dbContextFactory = dbContextFactory;
+            this._dbContextFactory = dbContextFactory;            
+        }
+
+        /// <summary>
+        /// Initialize a reusable connection using the provided endpoint url when the service starts
+        /// </summary>
+        /// <param name="endpoint"></param>
+        public void Start(string endpoint) {
+            try {
+                var factory = new ConnectionFactory { Uri = new Uri(endpoint) };
+                _connection = factory.CreateConnection();
+            }
+            catch (Exception ex) {
+                _logger.LogError($"RegistrationConsumeService.Start(): threw an exception {ex}");
+            }
         }
 
         /// <summary>
@@ -29,31 +47,34 @@ namespace RegistrationListenerService.Core.Services {
         /// </summary>
         /// <param name="rabbitMQ_Configuration"></param>
         /// <returns></returns>
-        public async Task ExecuteAsync(IRabbitMQ_Configuration rabbitMQ_Configuration) {
+        public Task ExecuteAsync(IRegistrationService_Configuration registrationService_Configuration) {
 
             try {
-                _channel = _connection.CreateModel();
-                _channel.ExchangeDeclare(rabbitMQ_Configuration.ExchangeName, ExchangeType.Direct, durable: true);
-                _channel.QueueDeclare(rabbitMQ_Configuration.QueueName,
+                this._registrationService_Configuration = registrationService_Configuration;
+
+                _channel = _connection.CreateModel();                
+                _channel.ExchangeDeclare(_registrationService_Configuration.ExchangeName, ExchangeType.Direct, durable: true);
+                _channel.QueueDeclare(_registrationService_Configuration.QueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
                     arguments: null);
 
-                _channel.QueueBind(rabbitMQ_Configuration.QueueName,
-                    rabbitMQ_Configuration.ExchangeName,
-                    rabbitMQ_Configuration.RoutingKey,
+                _channel.QueueBind(_registrationService_Configuration.QueueName,
+                    _registrationService_Configuration.ExchangeName,
+                    _registrationService_Configuration.RoutingKey,
                     null);
 
                 var consumer = new EventingBasicConsumer(_channel);
                 consumer.Received += Consumer_MessageReceived;
                 
-                _channel.BasicConsume(queue: rabbitMQ_Configuration.QueueName, autoAck: true, consumer: consumer);
+                _channel.BasicConsume(queue: _registrationService_Configuration.QueueName, autoAck: true, consumer: consumer);
             }
             catch (Exception ex) {
-                _logger.LogError($"RegistrationConsumeService.ExecuteAsync(): threw an exception. {ex}");
-                // throw maybe?
-            }            
+                _logger.LogError($"RegistrationConsumeService.ExecuteAsync(): threw an exception. {ex}");                
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -61,7 +82,7 @@ namespace RegistrationListenerService.Core.Services {
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Consumer_MessageReceived(object sender, BasicDeliverEventArgs e) {
+        private async void Consumer_MessageReceived(object sender, BasicDeliverEventArgs e) {
             try {
                 var body = e.Body.ToArray();
                 using var context = _dbContextFactory.CreateDbContext();
@@ -75,7 +96,10 @@ namespace RegistrationListenerService.Core.Services {
                 };
 
                 context.Add<RegistrationMessage>(messageRecord);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
+                FileHelper.WriteToCSVFile(_registrationService_Configuration.FileOutputPath,
+                                          _registrationService_Configuration.FileOutputName,
+                                          messageRecord);
             }
             catch(Exception ex) {
                 _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): threw an exception {ex}");
@@ -86,18 +110,14 @@ namespace RegistrationListenerService.Core.Services {
         /// Closes the channel and the connection when the service stops
         /// </summary>
         public void StopAndDispose() {
-            _channel.Close();
-            _connection.Close();
-            _connection.Dispose();
-        }
-
-        /// <summary>
-        /// Initialize a reusable connection using the provided endpoint url when the service starts
-        /// </summary>
-        /// <param name="endpoint"></param>
-        public void Start(string endpoint) {
-            var factory = new ConnectionFactory { Uri = new Uri(endpoint) };            
-            _connection = factory.CreateConnection();            
-         }
+            try {
+                _channel.Close();
+                _connection.Close();
+                _connection.Dispose();
+            }
+            catch(Exception ex) {
+                _logger.LogError($"RegistrationConsumeService.StopAndDispose(): threw an exception {ex}");
+            }            
+        }        
     }
 }
