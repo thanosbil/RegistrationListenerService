@@ -44,15 +44,18 @@ namespace RegistrationListenerService {
                 })
                 .ConfigureServices((hostContext, services) => {
                     services.AddHostedService<Worker>();
-                    
+                    services.AddHttpClient();
                     services.AddDbContextFactory<RegistrationsDBContext>(options => {
                         options.UseSqlServer(hostContext.Configuration.GetConnectionString("Default"));
                     });
-
+                                        
                     // configuration options for RabbitMQ
                     var registrationService_Configuration = new RegistrationService_Configuration();
                     hostContext.Configuration.Bind(nameof(RegistrationService_Configuration), registrationService_Configuration);
                     services.AddSingleton(registrationService_Configuration);
+
+                    // The service to repost the messages to the provided endpoints
+                    services.AddSingleton<IRepostingService, RepostingService>();
 
                     // The service listening for registration messages in the queue
                     services.AddSingleton<IRegistrationConsumeService, RegistrationsConsumeService>();                    

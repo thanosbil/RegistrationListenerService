@@ -17,15 +17,19 @@ namespace RegistrationListenerService.Core.Services {
     public class RegistrationsConsumeService : IRegistrationConsumeService {
         private readonly ILogger<RegistrationsConsumeService> _logger;
         private readonly IDbContextFactory<RegistrationsDBContext> _dbContextFactory;
+        private readonly IRepostingService _repostingService;
+
         private IRegistrationService_Configuration _registrationService_Configuration;
         private IConnection _connection;
         private IModel _channel;
 
         public RegistrationsConsumeService(ILogger<RegistrationsConsumeService> logger, 
-            IDbContextFactory<RegistrationsDBContext> dbContextFactory) {
+            IDbContextFactory<RegistrationsDBContext> dbContextFactory,
+            IRepostingService repostingService) {
 
             this._logger = logger;
-            this._dbContextFactory = dbContextFactory;            
+            this._dbContextFactory = dbContextFactory;
+            this._repostingService = repostingService;
         }
 
         /// <summary>
@@ -100,6 +104,7 @@ namespace RegistrationListenerService.Core.Services {
                 FileHelper.WriteToCSVFile(_registrationService_Configuration.FileOutputPath,
                                           _registrationService_Configuration.FileOutputName,
                                           messageRecord);
+                //_repostingService.RepostToEndpoint(, _registrationService_Configuration.PostEndpoint1);
             }
             catch(Exception ex) {
                 _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): threw an exception. {ex}");

@@ -12,7 +12,7 @@ namespace RegistrationListenerService {
         private readonly ILogger<Worker> _logger;
         private readonly IRegistrationConsumeService _consumeService;
         private readonly RegistrationService_Configuration _registrationService_Configuration;
-
+        
         public Worker(ILogger<Worker> logger, IRegistrationConsumeService consumeService, 
             RegistrationService_Configuration registrationService_Configuration) {
 
