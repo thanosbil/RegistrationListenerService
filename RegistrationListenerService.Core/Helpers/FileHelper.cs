@@ -19,7 +19,10 @@ namespace RegistrationListenerService.Core.Helpers {
         /// <param name="filename"></param>
         /// <param name="message"></param>
         internal static void WriteToCSVFile(string directory, string filename, RegistrationMessage message) {
-            filename += ".csv";
+            
+            if (!filename.EndsWith(".csv")) {
+                filename += ".csv";
+            }            
             string fullPath = Path.Combine(directory, filename);
 
             if (!Directory.Exists(directory)) {
