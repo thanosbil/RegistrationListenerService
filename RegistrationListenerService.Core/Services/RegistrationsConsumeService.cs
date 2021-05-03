@@ -1,15 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RegistrationListenerService.Core.DataAccess;
 using RegistrationListenerService.Core.Helpers;
 using RegistrationListenerService.Core.Interfaces;
+using RegistrationListenerService.Core.Mappings;
 using RegistrationListenerService.Core.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,6 +17,7 @@ namespace RegistrationListenerService.Core.Services {
         private readonly ILogger<RegistrationsConsumeService> _logger;
         private readonly IDbContextFactory<RegistrationsDBContext> _dbContextFactory;
         private readonly IRepostingService _repostingService;
+        private readonly IMapper _mapper;
 
         private IRegistrationService_Configuration _registrationService_Configuration;
         private IConnection _connection;
@@ -30,6 +30,8 @@ namespace RegistrationListenerService.Core.Services {
             this._logger = logger;
             this._dbContextFactory = dbContextFactory;
             this._repostingService = repostingService;
+            MapperConfiguration configuration = new MapperConfiguration(cfg => cfg.AddProfile(new MappingProfile()));
+            this._mapper = configuration.CreateMapper();
         }
 
         /// <summary>
@@ -89,9 +91,9 @@ namespace RegistrationListenerService.Core.Services {
         private async void Consumer_MessageReceived(object sender, BasicDeliverEventArgs e) {
             try {
                 var body = e.Body.ToArray();
-                using var context = _dbContextFactory.CreateDbContext();
-                var message = Encoding.UTF8.GetString(body);
                 
+                var message = Encoding.UTF8.GetString(body);
+
                 _logger.LogInformation($"New registration message received: {message}");
 
                 RegistrationMessage messageRecord = new RegistrationMessage {
@@ -99,18 +101,23 @@ namespace RegistrationListenerService.Core.Services {
                     ReceivedDateTime = DateTime.Now
                 };
 
-                context.Add<RegistrationMessage>(messageRecord);
-                await context.SaveChangesAsync();
+                RegistrationMessageRepost messageRepost = _mapper.Map<RegistrationMessageRepost>(messageRecord);
+
+                if(!await SaveToDataBase(messageRecord)) {
+                    _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): failed to save to DataBase");
+                }                
+                
                 FileHelper.WriteToCSVFile(_registrationService_Configuration.FileOutputPath,
                                           _registrationService_Configuration.FileOutputName,
                                           messageRecord);
-                //_repostingService.RepostToEndpoint(, _registrationService_Configuration.PostEndpoint1);
+                
+                await RepostRegistrationMessage(messageRepost);
             }
             catch(Exception ex) {
                 _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): threw an exception. {ex}");
             }            
         }
-
+        
         /// <summary>
         /// Closes the channel and the connection when the service stops
         /// </summary>
@@ -124,5 +131,40 @@ namespace RegistrationListenerService.Core.Services {
                 _logger.LogError($"RegistrationConsumeService.StopAndDispose(): threw an exception. {ex}");
             }            
         }        
+
+        /// <summary>
+        /// Creates a short lived DbContext and saves a RegistrationMessage to the Database
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        private async Task<bool> SaveToDataBase(RegistrationMessage message) {            
+            try {
+                using var context = _dbContextFactory.CreateDbContext();            
+                context.Add<RegistrationMessage>(message);
+                return await context.SaveChangesAsync() > 0;             
+                
+            }
+            catch(Exception ex) {
+                _logger.LogError($"RegistrationConsumeService.SaveToDataBase(): threw an exception. {ex}");
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Utilizes the RepostingService to repost a RegistrationMessageRepost instance to the provided endpoints
+        /// </summary>
+        /// <param name="messageRepost"></param>
+        /// <returns></returns>
+        private async Task RepostRegistrationMessage(RegistrationMessageRepost messageRepost) {
+            
+            if (!String.IsNullOrEmpty(_registrationService_Configuration.PostEndpoint1)) {
+                await _repostingService.RepostToEndpoint(messageRepost, _registrationService_Configuration.PostEndpoint1);
+            }
+
+            if (!String.IsNullOrEmpty(_registrationService_Configuration.PostEndpoint2)) {
+                await _repostingService.RepostToEndpoint(messageRepost, _registrationService_Configuration.PostEndpoint2);
+            }            
+        }
     }
 }

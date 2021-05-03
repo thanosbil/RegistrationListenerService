@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace RegistrationListenerService.Core.Models {
-    public class RegistrationMessage : BaseEntity {                
+    public class RegistrationMessage : RegistrationMessageBase {                
 
     }
 }
