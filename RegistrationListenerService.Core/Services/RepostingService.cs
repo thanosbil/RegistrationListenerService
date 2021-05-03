@@ -19,8 +19,7 @@ namespace RegistrationListenerService.Core.Services {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<RepostingService> _logger;
         private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
-        private readonly IMapper _mapper;
-
+        
         public RepostingService(IHttpClientFactory httpClientFactory, ILogger<RepostingService> logger) {
             this._httpClientFactory = httpClientFactory;
             this._logger = logger;
@@ -33,9 +32,6 @@ namespace RegistrationListenerService.Core.Services {
                     onRetry: (outcome, timespan, retryAttempt, context) => {
                         _logger.LogWarning("Delaying for {delay}ms, then making retry {retry}.", timespan.TotalMilliseconds, retryAttempt);
                     });
-
-            MapperConfiguration configuration = new MapperConfiguration(cfg => cfg.AddProfile(new MappingProfile()));
-            this._mapper = configuration.CreateMapper();
         }
 
         /// <summary>
