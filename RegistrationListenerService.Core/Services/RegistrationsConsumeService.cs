@@ -101,15 +101,15 @@ namespace RegistrationListenerService.Core.Services {
                     ReceivedDateTime = DateTime.Now
                 };
 
-                RegistrationMessageRepost messageRepost = _mapper.Map<RegistrationMessageRepost>(messageRecord);
-                
                 // Always save to the Database
                 Tuple<bool,string> result = await SaveToDatabase(messageRecord);
-                messageRepost.PersistenceSystems.Add(result.Item2);
-                
+
                 if (!result.Item1) {                    
                     _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): failed to save to Database");
                 }
+
+                RegistrationMessageRepost messageRepost = _mapper.Map<RegistrationMessageRepost>(messageRecord);
+                messageRepost.PersistenceSystems.Add(result.Item2);
 
                 // Save to file if the operation mode is set to 'DatabaseAndFile'
                 if (_registrationService_Configuration.DataPersistenceMode == PersistenceMode.DatabaseAndFile) {
