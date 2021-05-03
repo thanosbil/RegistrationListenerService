@@ -50,5 +50,10 @@ namespace RegistrationListenerService.Core.Interfaces {
         /// The endpoint for the second service
         /// </summary>
         string PostEndpoint2 { get; set; }
+
+        /// <summary>
+        /// The mode of operation for data storage
+        /// </summary>
+        PersistenceMode DataPersistenceMode { get; set; }
     }
 }

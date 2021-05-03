@@ -1,4 +1,5 @@
-﻿using RegistrationListenerService.Core.Interfaces;
+﻿using RegistrationListenerService.Core;
+using RegistrationListenerService.Core.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,5 +48,10 @@ namespace RegistrationListenerService {
         /// The endpoint for the second service
         /// </summary>
         public string PostEndpoint2 { get; set; }
+
+        /// <summary>
+        /// The mode of operation for data storage (0 = Database, 1 = DatabaseAndFile)
+        /// </summary>
+        public PersistenceMode DataPersistenceMode { get; set; }
     }
 }

@@ -9,6 +9,7 @@ using RegistrationListenerService.Core.Interfaces;
 using RegistrationListenerService.Core.Mappings;
 using RegistrationListenerService.Core.Models;
 using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -90,8 +91,7 @@ namespace RegistrationListenerService.Core.Services {
         /// <param name="e"></param>
         private async void Consumer_MessageReceived(object sender, BasicDeliverEventArgs e) {
             try {
-                var body = e.Body.ToArray();
-                
+                var body = e.Body.ToArray();                
                 var message = Encoding.UTF8.GetString(body);
 
                 _logger.LogInformation($"New registration message received: {message}");
@@ -102,14 +102,23 @@ namespace RegistrationListenerService.Core.Services {
                 };
 
                 RegistrationMessageRepost messageRepost = _mapper.Map<RegistrationMessageRepost>(messageRecord);
-
-                if(!await SaveToDataBase(messageRecord)) {
-                    _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): failed to save to DataBase");
-                }                
                 
-                FileHelper.WriteToCSVFile(_registrationService_Configuration.FileOutputPath,
+                // Always save to the Database
+                Tuple<bool,string> result = await SaveToDatabase(messageRecord);
+                messageRepost.PersistenceSystems.Add(result.Item2);
+                
+                if (!result.Item1) {                    
+                    _logger.LogError($"RegistrationConsumeService.Consumer_MessageReceived(): failed to save to Database");
+                }
+
+                // Save to file if the operation mode is set to 'DatabaseAndFile'
+                if (_registrationService_Configuration.DataPersistenceMode == PersistenceMode.DatabaseAndFile) {
+                    FileHelper.WriteToCSVFile(_registrationService_Configuration.FileOutputPath,
                                           _registrationService_Configuration.FileOutputName,
                                           messageRecord);
+                    messageRepost.PersistenceSystems.Add(Path.Combine(_registrationService_Configuration.FileOutputPath,
+                        _registrationService_Configuration.FileOutputName));
+                }                
                 
                 await RepostRegistrationMessage(messageRepost);
             }
@@ -137,18 +146,20 @@ namespace RegistrationListenerService.Core.Services {
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        private async Task<bool> SaveToDataBase(RegistrationMessage message) {            
+        private async Task<Tuple<bool, string>> SaveToDatabase(RegistrationMessage message) {            
             try {
                 using var context = _dbContextFactory.CreateDbContext();            
                 context.Add<RegistrationMessage>(message);
-                return await context.SaveChangesAsync() > 0;             
+                string databaseName = context.Database.GetDbConnection().Database;
+
+                return new Tuple<bool, string>(await context.SaveChangesAsync() > 0, databaseName);             
                 
             }
             catch(Exception ex) {
-                _logger.LogError($"RegistrationConsumeService.SaveToDataBase(): threw an exception. {ex}");
+                _logger.LogError($"RegistrationConsumeService.SaveToDatabase(): threw an exception. {ex}");
             }
 
-            return false;
+            return new Tuple<bool,string>(false, "");
         }
 
         /// <summary>

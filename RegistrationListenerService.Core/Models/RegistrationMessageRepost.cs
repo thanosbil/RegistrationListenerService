@@ -10,7 +10,7 @@ namespace RegistrationListenerService.Core.Models {
         /// <summary>
         /// e.g. Database name, File storage path
         /// </summary>
-        public List<string> PersistenceSystems { get; set; }
+        public List<string> PersistenceSystems { get; set; } = new List<string>();
 
         /// <summary>
         /// Timespan between message reception and repost to endpoint

@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 namespace RegistrationListenerService.Core.Mappings {
     public class MappingProfile : Profile {
         public MappingProfile() {
-            CreateMap<RegistrationMessage, RegistrationMessageRepost>();
+            CreateMap<RegistrationMessage, RegistrationMessageRepost>()
+                .ForMember(dest => dest.PersistenceTime, options =>
+                    options.MapFrom(src => DateTime.Now.Subtract(src.ReceivedDateTime)));
         }
     }
 }
